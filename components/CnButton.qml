@@ -1,99 +1,108 @@
 import QtQuick
 import QtQuick.Controls
 
-Rectangle {
-    id: button
-    width: size === "lg" ? 140 : size === "sm" ? 90 : 120
-    height: size === "lg" ? 50 : size === "sm" ? 35 : 40
-    radius: size === "icon" ? width / 2 : 6
-    color: variant === "destructive" ? "#F87171" :
-           variant === "outline" ? "transparent" :
-           variant === "secondary" ? "#6B7280" :
-           variant === "ghost" ? "transparent" :
-           variant === "link" ? "transparent" :
-           "#2563EB" // default (bg-primary)
-
-    border.color: variant === "outline" ? "#D1D5DB" : "transparent"
-    border.width: variant === "outline" ? 1 : 0
+Button {
+    id: root
 
     property string variant: "default"
     property string size: "default"
-    property bool disabled: false
-    property string buttonText: "Click Me"
 
-    signal clicked
+    padding: size === "lg" ? 12 : size === "sm" ? 6 : 8
+    topPadding: size === "default" ? 7 : padding
+    bottomPadding: size === "default" ? 7 : padding
+    leftPadding: size === "sm" ? 10 : size === "default" ? 13 : 16
+    rightPadding: size === "sm" ? 10 : size === "default" ? 13 : 16
 
-    Text {
-        id: textItem
-        text: buttonText
-        anchors.centerIn: parent
-        color: variant === "destructive" ? "#F1F5F9" :
-               variant === "outline" ? "#374151" :
-               variant === "secondary" ? "#E5E7EB" :
-               variant === "ghost" ? "#374151" :
-               variant === "link" ? "#2563EB" :
-               "#FFFFFF" // default (text-primary-foreground)
-        font.pixelSize: size === "lg" ? 18 : size === "sm" ? 14 : 16
-        font.bold: true
+    implicitWidth: size === "icon" ? 40 : Math.max(implicitBackgroundWidth + leftInset + rightInset,
+                                implicitContentWidth + leftPadding + rightPadding)
+    implicitHeight: size === "icon" ? 40 : Math.max(implicitBackgroundHeight + topInset + bottomInset,
+                                 implicitContentHeight + topPadding + bottomPadding)
+
+    background: Rectangle {
+        id: buttonBackground
+        radius: size === "icon" ? Math.min(root.width, root.height) / 2 : 4
+
+        color: {
+            switch(variant) {
+                case "destructive": return "#944040"
+                case "outline": case "icon": return "transparent"
+                case "secondary": return "#333339"
+                case "ghost": return "transparent"
+                case "link": return "transparent"
+                default: return "white" // bg-primary
+            }
+        }
+
+        border {
+            color: (variant === "outline" || variant === "icon") ? "#676769" : "transparent"
+            width: (variant === "outline" || variant === "icon") ? 0.5 : 0
+        }
+
+        Behavior on color {
+            ColorAnimation { duration: 200 }
+        }
     }
 
-    MouseArea {
-        id: mouseArea
-        anchors.fill: parent
-        onClicked: {
-            if (!button.disabled) {
-                button.clicked()
+    contentItem: Text {
+        text: root.text
+        font {
+            pixelSize: size === "lg" ? 16 : size === "sm" ? 11 : 13
+            weight: Font.Medium
+        }
+        color: {
+            switch(variant) {
+                case "destructive": return "#F1F5F9"
+                case "outline": case "ghost": case "link": case "icon": return "white"
+                case "secondary": return "white"
+                default: return "#0d1012" // text-primary-foreground
             }
         }
-
-        onEntered: {
-            if (!button.disabled) {
-                button.color = variant === "destructive" ? "#DC2626" :
-                               variant === "outline" ? "#F3F4F6" :
-                               variant === "secondary" ? "#4B5563" :
-                               variant === "ghost" ? "#F3F4F6" :
-                               variant === "link" ? "#2563EB" :
-                               "#1D4ED8" // hover-primary
-            }
-        }
-
-        onExited: {
-            if (!button.disabled) {
-                button.color = variant === "destructive" ? "#F87171" :
-                               variant === "outline" ? "transparent" :
-                               variant === "secondary" ? "#6B7280" :
-                               variant === "ghost" ? "transparent" :
-                               variant === "link" ? "transparent" :
-                               "#2563EB" // default
-            }
-        }
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
+        elide: Text.ElideRight
     }
 
     states: [
         State {
-            name: "disabled"
-            when: button.disabled
+            name: "hovered"
+            when: hovered
             PropertyChanges {
-                target: textItem
-                color: "#9CA3AF"
+                target: buttonBackground
+                color: {
+                    switch(variant) {
+                        case "destructive": return Qt.darker("#944040", 1.1)
+                        case "outline": case "ghost": case "icon": return "#333339"
+                        case "secondary": return Qt.darker("#333339", 1.1)
+                        case "link": return "transparent"
+                        default: return Qt.darker("white", 1.1)
+                    }
+                }
             }
             PropertyChanges {
-                target: button
+                target: root.contentItem
+                font.underline: {
+                    switch(variant) {
+                        case "link": return true
+                    }
+                }
+            }
+        },
+        State {
+            name: "pressed"
+            when: pressed
+            PropertyChanges {
+                target: buttonBackground
+                color: Qt.darker(buttonBackground.color, 1.2)
+            }
+        },
+        State {
+            name: "disabled"
+            when: !enabled
+            PropertyChanges {
+                target: root
                 opacity: 0.5
             }
         }
     ]
-
-    Behavior on color {
-        NumberAnimation {
-            duration: 150
-        }
-    }
-
-    Behavior on opacity {
-        NumberAnimation {
-            duration: 150
-        }
-    }
 }
 
